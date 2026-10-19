@@ -5,11 +5,13 @@ import {
   Outlet,
   useFetcher,
   useLoaderData,
+  useRouteLoaderData,
 } from "react-router-dom";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { getNavLinkClass } from "../utils/NavLinkClasses";
 
 export default function RecipeDetailsPage() {
+  const token = useRouteLoaderData("root")?.token;
   const fetcher = useFetcher();
   const isDeleting = fetcher.state !== "idle";
   const { recipe } = useLoaderData();
@@ -32,21 +34,24 @@ export default function RecipeDetailsPage() {
               </NavLink>
             </div>
             <Outlet context={loadedRecipe} />
-            <fetcher.Form
-              method="delete"
-              className="flex"
-              onSubmit={(e) => {
-                if (!window.confirm("Delete this recipe?")) e.preventDefault();
-              }}
-            >
-              <button
-                type="submit"
-                disabled={isDeleting}
-                className="cursor-pointer px-4 py-2 text-sm font-medium transition-all duration-200 text-red-400 hover:text-red-300 disabled:opacity-50"
+            {token && (
+              <fetcher.Form
+                method="delete"
+                className="flex"
+                onSubmit={(e) => {
+                  if (!window.confirm("Delete this recipe?"))
+                    e.preventDefault();
+                }}
               >
-                {isDeleting ? "Deleting..." : "Delete Recipe"}
-              </button>
-            </fetcher.Form>
+                <button
+                  type="submit"
+                  disabled={isDeleting}
+                  className="cursor-pointer px-4 py-2 text-sm font-medium transition-all duration-200 text-red-400 hover:text-red-300 disabled:opacity-50"
+                >
+                  {isDeleting ? "Deleting..." : "Delete Recipe"}
+                </button>
+              </fetcher.Form>
+            )}
           </div>
         )}
       </Await>

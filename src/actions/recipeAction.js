@@ -1,5 +1,6 @@
 import { redirect } from "react-router-dom";
 import recipes from "../data";
+import { requireAuth } from "../utils/auth";
 
 const PLACEHOLDER_IMAGE = "https://placehold.co/800x600?text=No+Image";
 
@@ -10,6 +11,7 @@ const splitLines = (text) =>
     .filter((line) => line !== "");
 
 export async function newRecipeAction({ request }) {
+  requireAuth();
   const formData = await request.formData();
   const title = String(formData.get("title") ?? "").trim();
   const image = String(formData.get("image") ?? "").trim();
@@ -32,6 +34,8 @@ export async function newRecipeAction({ request }) {
 }
 
 export async function deleteRecipeAction({ params }) {
+  requireAuth();
+
   await new Promise((resolve) => setTimeout(resolve, 500));
 
   const recipeIndex = recipes.findIndex((r) => r.id === params.recipeId);
