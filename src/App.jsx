@@ -3,19 +3,19 @@ import {
   RouterProvider,
   redirect,
 } from "react-router-dom";
+import { lazy, Suspense } from "react";
 import RootLayout from "./pages/RootLayout";
 import ErrorPage from "./pages/ErrorPage";
 import RecipesPage from "./pages/RecipesPage";
-import RecipeDetailsPage from "./pages/RecipeDetailsPage";
 import Ingredients from "./pages/Ingredients";
 import Steps from "./pages/Steps";
-import NewRecipe from "./pages/NewRecipe";
-import { authAction, logoutAction } from "./actions/authActions";
-import { recipeDetailLoader, recipesLoader } from "./loaders/RecipeLoaders";
-import { newRecipeAction, deleteRecipeAction } from "./actions/recipeAction";
-import { requireAuth, tokenLoader } from "./utils/auth";
-import AuthenticationPage from "./pages/Authentication";
-import { authLoader } from "./loaders/authLoader";
+import { logoutAction } from "./actions/authActions";
+import { recipesLoader } from "./loaders/recipeLoaders";
+import { tokenLoader } from "./utils/auth";
+
+const NewRecipe = lazy(() => import("./pages/NewRecipe"));
+const AuthenticationPage = lazy(() => import("./pages/Authentication"));
+const RecipeDetailsPage = lazy(() => import("./pages/RecipeDetailsPage"));
 
 const router = createBrowserRouter([
   {
@@ -32,9 +32,19 @@ const router = createBrowserRouter([
       },
       {
         path: "auth",
-        element: <AuthenticationPage />,
-        action: authAction,
-        loader: authLoader,
+        element: (
+          <Suspense fallback={<div>Loading...</div>}>
+            <AuthenticationPage />
+          </Suspense>
+        ),
+        action: ({ request }) =>
+          import("./actions/authActions").then((module) =>
+            module.authAction({ request }),
+          ),
+        loader: ({ request }) =>
+          import("./loaders/authLoader").then((module) =>
+            module.authLoader({ request }),
+          ),
       },
       {
         path: "logout",
@@ -46,15 +56,33 @@ const router = createBrowserRouter([
         children: [
           {
             path: "new",
-            element: <NewRecipe />,
-            action: newRecipeAction,
-            loader: requireAuth,
+            element: (
+              <Suspense fallback={<div>Loading...</div>}>
+                <NewRecipe />
+              </Suspense>
+            ),
+            action: ({ request }) =>
+              import("./actions/recipeAction").then((module) =>
+                module.newRecipeAction({ request }),
+              ),
+            loader: () =>
+              import("./utils/auth").then((module) => module.requireAuth()),
           },
           {
             path: ":recipeId",
-            element: <RecipeDetailsPage />,
-            loader: recipeDetailLoader,
-            action: deleteRecipeAction,
+            element: (
+              <Suspense fallback={null}>
+                <RecipeDetailsPage />
+              </Suspense>
+            ),
+            loader: ({ params }) =>
+              import("./loaders/recipeLoaders").then((module) =>
+                module.recipeDetailLoader({ params }),
+              ),
+            action: ({ params }) =>
+              import("./actions/recipeAction").then((module) =>
+                module.deleteRecipeAction({ params }),
+              ),
             children: [
               { index: true, element: <Ingredients /> },
               { path: "steps", element: <Steps /> },
